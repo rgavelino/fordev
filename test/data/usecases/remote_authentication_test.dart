@@ -22,6 +22,12 @@ void main() {
     sut = RemoteAuthentication(httpClient: httpClient, url: url);
     params = AuthenticationParams(
         email: faker.internet.email(), secret: faker.internet.password());
+    when(httpClient.request(
+            url: anyNamed('url'),
+            method: anyNamed('method'),
+            body: anyNamed('body')))
+        .thenAnswer((_) async =>
+            {'accessToken': faker.guid.guid(), 'name': faker.person.name()});
   });
 
   test(
@@ -45,11 +51,8 @@ void main() {
   test(
     'Should call HttpClient with correct values',
     () async {
-      final httpClient = HttpClientSpy();
       final url = faker.internet.httpUrl();
-      //Design Pattern - Triple A
-      final sut = RemoteAuthentication(
-          httpClient: httpClient, url: url); //sut - system under test
+      final sut = RemoteAuthentication(httpClient: httpClient, url: url);
 
       await sut.auth(params);
 
@@ -69,11 +72,8 @@ void main() {
   test(
     'Should call HttpClient with correct body',
     () async {
-      final httpClient = HttpClientSpy();
       final url = faker.internet.httpUrl();
-      //Design Pattern - Triple A
-      final sut = RemoteAuthentication(
-          httpClient: httpClient, url: url); //sut - system under test
+      final sut = RemoteAuthentication(httpClient: httpClient, url: url);
 
       await sut.auth(params);
 
@@ -123,5 +123,19 @@ void main() {
     final future = sut.auth(params);
 
     expect(future, throwsA(DomainError.invalidCredentials));
+  });
+
+  test('Should return an Account if HttpClient returns 200', () async {
+    final accessToken = faker.guid.guid();
+    when(httpClient.request(
+            url: anyNamed('url'),
+            method: anyNamed('method'),
+            body: anyNamed('body')))
+        .thenAnswer((_) async =>
+            {'accessToken': accessToken, 'name': faker.person.name()});
+
+    final account = await sut.auth(params);
+
+    expect(account.token, accessToken);
   });
 }
