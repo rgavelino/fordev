@@ -95,8 +95,6 @@ void main() {
             body: anyNamed('body')))
         .thenThrow(HttpError.badRequest);
 
-    final params = AuthenticationParams(
-        email: faker.internet.email(), secret: faker.internet.password());
     final future = sut.auth(params);
 
     expect(future, throwsA(DomainError.unexpected));
